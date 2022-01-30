@@ -1,0 +1,1767 @@
+[
+    {
+        "id": "927b6c6e69ddacb4",
+        "type": "tab",
+        "label": "\"Hello World\" Test",
+        "disabled": true,
+        "info": ""
+    },
+    {
+        "id": "d4e97245cc75c606",
+        "type": "tab",
+        "label": "Three.Js Playground",
+        "disabled": true,
+        "info": ""
+    },
+    {
+        "id": "79782dcfc5608d75",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "6d3760f81b442703",
+        "type": "tab",
+        "label": "Flow 2",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "520818ab62441fe9",
+        "type": "tab",
+        "label": "Flow 3",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "c6bb1eb5.edd3d",
+        "type": "websocket-listener",
+        "path": "/ws/publish",
+        "wholemsg": "true"
+    },
+    {
+        "id": "a5db9e65.7dd36",
+        "type": "websocket-listener",
+        "path": "/ws/receive",
+        "wholemsg": "true"
+    },
+    {
+        "id": "53f1436b4b5a5ddb",
+        "type": "websocket-client",
+        "d": true,
+        "path": "ws/publish",
+        "tls": "",
+        "wholemsg": "false",
+        "hb": "0"
+    },
+    {
+        "id": "1acb1619cd164e4a",
+        "type": "websocket-listener",
+        "path": "/ws/websocketbs",
+        "wholemsg": "false"
+    },
+    {
+        "id": "985ecbc7.67a138",
+        "type": "websocket-listener",
+        "z": "520818ab62441fe9",
+        "path": "/ws/simple",
+        "wholemsg": "false"
+    },
+    {
+        "id": "82bc22cb.914be",
+        "type": "http in",
+        "z": "927b6c6e69ddacb4",
+        "name": "",
+        "url": "/cube",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 100,
+        "y": 140,
+        "wires": [
+            [
+                "ab9b0e5e.f8f8b"
+            ]
+        ]
+    },
+    {
+        "id": "6752712.7f98a9",
+        "type": "http response",
+        "z": "927b6c6e69ddacb4",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 645,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "ab9b0e5e.f8f8b",
+        "type": "template",
+        "z": "927b6c6e69ddacb4",
+        "name": "three.js",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "<html>\n<head>\n\n    <title>Test</title>\n\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    \n    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.js\"></script>\n    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js\"></script>\n    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.module.js\"></script>\n    \n<script>\nvar server = window.location.href.split(\"http://\")[1].split(\"/\")[0]\nconsole.log(\"Page location is \" + server)\n\nvar socket1 = new  WebSocket(\"ws://\" + server + \"/ws/receive\");\nvar socket2 = new  WebSocket(\"ws://\" + server + \"/ws/publish\");\nvar cubeRotationSpeed = 0.02;\nlet cubeColor = \"blue\"\nvar socket1Opened = false\n\nsocket1.onopen = function() {\n    socket1Opened = true\n  var message = {\n    'payload': 'Client connected'\n  };\n  socket1.send(JSON.stringify(message));\n};\n\nsocket2.onopen = function() {\n  var message = {\n    'payload': 'Client connected'\n  };\n  socket1.send(JSON.stringify(message));\n};\n\nsocket2.onclose = function(){\n  console.log('Connection closed');\n};\n\nsocket2.onerror = function(error) {\n  console.log('Error detected: ' + JSON.stringify(error));\n};\n\nsocket2.onmessage = function(e) {\n  var server_message = e.data;\n  console.log(e);\n  responseObject = JSON.parse(server_message);\n\n  //alert(JSON.stringify(responseObject));\n  //Do the required stuff\n  console.log(responseObject.payload)\n  if (responseObject.payload.cubeRotationSpeed){\n      cubeRotationSpeed = responseObject.payload.cubeRotationSpeed\n  }else if(responseObject.payload.cubeColor){\n      cubeColor = responseObject.payload.cubeColor\n  }\n}\n\nvar scene = new THREE.Scene();\n\n// Make highly-transparent plane\nvar fadeMaterial = new THREE.MeshBasicMaterial({\n    color: 0x000000,\n    transparent: true,\n    opacity: 0.02\n});\nvar fadePlane = new THREE.PlaneBufferGeometry(1, 1);\nvar fadeMesh = new THREE.Mesh(fadePlane, fadeMaterial);\n\n// Create Object3D to hold camera and transparent plane\nvar camGroup = new THREE.Object3D();\nvar camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);\ncamGroup.add(camera);\ncamGroup.add(fadeMesh);\n\n// Put plane in front of camera\nfadeMesh.position.z = -0.1;\n\n// Make plane render before particles\nfadeMesh.renderOrder = -1;\n\n// Add camGroup to scene\nscene.add(camGroup);\n\n\nrenderer = new THREE.WebGLRenderer( { preserveDrawingBuffer: true, antialias: true } );\nrenderer.autoClearColor = false;\nrenderer.setSize(window.innerWidth, window.innerHeight);\n\ndocument.addEventListener('DOMContentLoaded', function () {   \n    document.body.appendChild(renderer.domElement);\n});\n\nvar geometry = new THREE.BoxGeometry(1,1,1);\n//var color = new THREE.Color(0xff0000)\nvar material = new THREE.MeshBasicMaterial({color: \"blue\"});\nvar cube = new THREE.Mesh(geometry, material);\nscene.add(cube);\n\ncube.position.z = -5;\n\nvar step = .03;\nfunction animate(){\n\n    cube.rotation.x += cubeRotationSpeed;\n    cube.rotation.y += 0.02;\n    cube.position.x += step;\n    cube.material.color = new THREE.Color(cubeColor);\n    if(Math.abs(cube.position.x) > 5.0)\n    {\n        step = -step;\n        if (socket1Opened){\n            socket1.send(\"ping\");\n        }\n    }\n    renderer.render(scene, camera);\n\n    requestAnimationFrame(animate);\n}\n\nanimate();\n\n</script>\n\n\n",
+        "output": "str",
+        "x": 310,
+        "y": 140,
+        "wires": [
+            [
+                "f195cd.89a76a3"
+            ]
+        ]
+    },
+    {
+        "id": "f8262338.541b2",
+        "type": "websocket out",
+        "z": "927b6c6e69ddacb4",
+        "name": "",
+        "server": "c6bb1eb5.edd3d",
+        "client": "",
+        "x": 840,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "1f953c53.234544",
+        "type": "inject",
+        "z": "927b6c6e69ddacb4",
+        "name": "Spin slow",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeRotationSpeed\":0.02}",
+        "payloadType": "json",
+        "x": 445,
+        "y": 260,
+        "wires": [
+            [
+                "f8262338.541b2"
+            ]
+        ]
+    },
+    {
+        "id": "ae4b9f83.855ed",
+        "type": "inject",
+        "z": "927b6c6e69ddacb4",
+        "name": "Spin fast",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeRotationSpeed\":0.1}",
+        "payloadType": "json",
+        "x": 445,
+        "y": 305,
+        "wires": [
+            [
+                "f8262338.541b2"
+            ]
+        ]
+    },
+    {
+        "id": "f195cd.89a76a3",
+        "type": "change",
+        "z": "927b6c6e69ddacb4",
+        "name": "Set Headers",
+        "rules": [
+            {
+                "t": "set",
+                "p": "headers",
+                "pt": "msg",
+                "to": "{}",
+                "tot": "json"
+            },
+            {
+                "t": "set",
+                "p": "headers.content-type",
+                "pt": "msg",
+                "to": "text/html",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "headers.Access-Control-Allow-Origin",
+                "pt": "msg",
+                "to": "*",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 470,
+        "y": 140,
+        "wires": [
+            [
+                "6752712.7f98a9"
+            ]
+        ]
+    },
+    {
+        "id": "eba548fa.e65d98",
+        "type": "change",
+        "z": "927b6c6e69ddacb4",
+        "name": "",
+        "rules": [
+            {
+                "t": "delete",
+                "p": "_session",
+                "pt": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 635,
+        "y": 200,
+        "wires": [
+            [
+                "f8262338.541b2"
+            ]
+        ]
+    },
+    {
+        "id": "c1fc2e6e.bd70e",
+        "type": "websocket in",
+        "z": "927b6c6e69ddacb4",
+        "name": "",
+        "server": "a5db9e65.7dd36",
+        "client": "",
+        "x": 120,
+        "y": 200,
+        "wires": [
+            [
+                "22fc2d8b.025e32"
+            ]
+        ]
+    },
+    {
+        "id": "22fc2d8b.025e32",
+        "type": "switch",
+        "z": "927b6c6e69ddacb4",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "ping",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 285,
+        "y": 200,
+        "wires": [
+            [
+                "eaae5e3a.3f284"
+            ]
+        ]
+    },
+    {
+        "id": "eaae5e3a.3f284",
+        "type": "function",
+        "z": "927b6c6e69ddacb4",
+        "name": "change color",
+        "func": "let colors = [\"white\",\"red\",0x00ff00,0x0000ff] //both hex or string are fine\nmsg.payload =  {\"cubeColor\": colors[Math.floor(Math.random()*colors.length)]}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 440,
+        "y": 200,
+        "wires": [
+            [
+                "eba548fa.e65d98"
+            ]
+        ]
+    },
+    {
+        "id": "94b2919c.8d227",
+        "type": "comment",
+        "z": "927b6c6e69ddacb4",
+        "name": "Three.js example with websockets",
+        "info": "",
+        "x": 180,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "e03f362fb4501bc9",
+        "type": "template",
+        "z": "927b6c6e69ddacb4",
+        "name": "MyThree.js",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "<html>\n<head>\n\n    <title>Test</title>\n\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    \n    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.js\"></script>\n    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js\"></script>\n    <script src=\"https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.module.js\"></script>\n    \n<script>\nvar server = window.location.href.split(\"http://\")[1].split(\"/\")[0]\nconsole.log(\"Page location is \" + server)\n\nvar socket1 = new  WebSocket(\"ws://\" + server + \"/ws/receive\");\nvar socket2 = new  WebSocket(\"ws://\" + server + \"/ws/publish\");\nvar cubeRotationSpeed = 0.02;\nlet cubeColor = \"blue\"\nvar socket1Opened = false\n\nsocket1.onopen = function() {\n    socket1Opened = true\n  var message = {\n    'payload': 'Client connected'\n  };\n  socket1.send(JSON.stringify(message));\n};\n\nsocket2.onopen = function() {\n  var message = {\n    'payload': 'Client connected'\n  };\n  socket1.send(JSON.stringify(message));\n};\n\nsocket2.onclose = function(){\n  console.log('Connection closed');\n};\n\nsocket2.onerror = function(error) {\n  console.log('Error detected: ' + JSON.stringify(error));\n};\n\nsocket2.onmessage = function(e) {\n  var server_message = e.data;\n  responseObject = JSON.parse(server_message);\n\n  //alert(JSON.stringify(responseObject));\n  //Do the required stuff\n  console.log(responseObject.payload)\n  if (responseObject.payload.cubeRotationSpeed){\n      cubeRotationSpeed = responseObject.payload.cubeRotationSpeed\n  }else if(responseObject.payload.cubeColor){\n      cubeColor = responseObject.payload.cubeColor\n  }\n}\n\nvar scene = new THREE.Scene();\n\n// Make highly-transparent plane\nvar fadeMaterial = new THREE.MeshBasicMaterial({\n    color: 0x000000,\n    transparent: true,\n    opacity: 0.02\n});\nvar fadePlane = new THREE.PlaneBufferGeometry(1, 1);\nvar fadeMesh = new THREE.Mesh(fadePlane, fadeMaterial);\n\n// Create Object3D to hold camera and transparent plane\nvar camGroup = new THREE.Object3D();\nvar camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);\ncamGroup.add(camera);\ncamGroup.add(fadeMesh);\n\n// Put plane in front of camera\nfadeMesh.position.z = -0.1;\n\n// Make plane render before particles\nfadeMesh.renderOrder = -1;\n\n// Add camGroup to scene\nscene.add(camGroup);\n\n\nrenderer = new THREE.WebGLRenderer( { preserveDrawingBuffer: true, antialias: true } );\nrenderer.autoClearColor = false;\nrenderer.setSize(window.innerWidth, window.innerHeight);\n\ndocument.addEventListener('DOMContentLoaded', function () {   \n    document.body.appendChild(renderer.domElement);\n});\n\nvar geometry = new THREE.BoxGeometry(1,1,1);\n//var color = new THREE.Color(0xff0000)\nvar material = new THREE.MeshBasicMaterial({color: \"blue\"});\nvar cube = new THREE.Mesh(geometry, material);\nscene.add(cube);\n\ncube.position.z = -5;\n\nvar step = .03;\nfunction animate(){\n\n    cube.rotation.x += cubeRotationSpeed;\n    cube.rotation.y += 0.02;\n    cube.position.x += step;\n    cube.material.color = new THREE.Color(cubeColor);\n    if(Math.abs(cube.position.x) > 5.0)\n    {\n        step = -step;\n        if (socket1Opened){\n            socket1.send(\"ping\");\n        }\n    }\n    renderer.render(scene, camera);\n\n    requestAnimationFrame(animate);\n}\n\nanimate();\n\n</script>\n\n\n",
+        "output": "str",
+        "x": 330,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "dea8478e1550eb2d",
+        "type": "http in",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "url": "/cube",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 120,
+        "y": 160,
+        "wires": [
+            [
+                "c61972d9c640cdaf"
+            ]
+        ]
+    },
+    {
+        "id": "4a978e5a67f25408",
+        "type": "http response",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 970,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "fc40e94e6fcb2698",
+        "type": "websocket out",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "server": "c6bb1eb5.edd3d",
+        "client": "",
+        "x": 920,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "abe38f66a570c074",
+        "type": "inject",
+        "z": "d4e97245cc75c606",
+        "name": "Spin slow",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeRotationSpeed\":0.02}",
+        "payloadType": "json",
+        "x": 465,
+        "y": 360,
+        "wires": [
+            [
+                "e621d3fbe6bead78"
+            ]
+        ]
+    },
+    {
+        "id": "018976e4f2367743",
+        "type": "inject",
+        "z": "d4e97245cc75c606",
+        "name": "Spin fast",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeRotationSpeed\":0.1}",
+        "payloadType": "json",
+        "x": 465,
+        "y": 405,
+        "wires": [
+            [
+                "e621d3fbe6bead78"
+            ]
+        ]
+    },
+    {
+        "id": "3ba6c45221cb0830",
+        "type": "change",
+        "z": "d4e97245cc75c606",
+        "name": "Set Headers",
+        "rules": [
+            {
+                "t": "set",
+                "p": "headers",
+                "pt": "msg",
+                "to": "{}",
+                "tot": "json"
+            },
+            {
+                "t": "set",
+                "p": "headers.content-type",
+                "pt": "msg",
+                "to": "text/html",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "headers.Access-Control-Allow-Origin",
+                "pt": "msg",
+                "to": "*",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 490,
+        "y": 160,
+        "wires": [
+            [
+                "d65888f14ac3f9e8"
+            ]
+        ]
+    },
+    {
+        "id": "39582722b90e4fc7",
+        "type": "change",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "rules": [
+            {
+                "t": "delete",
+                "p": "_session",
+                "pt": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 655,
+        "y": 300,
+        "wires": [
+            [
+                "e621d3fbe6bead78"
+            ]
+        ]
+    },
+    {
+        "id": "f8ddcc3591199f9e",
+        "type": "websocket in",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "server": "a5db9e65.7dd36",
+        "client": "",
+        "x": 140,
+        "y": 300,
+        "wires": [
+            [
+                "a375b67e70026fdc",
+                "4259fadcaa8cf313"
+            ]
+        ]
+    },
+    {
+        "id": "a375b67e70026fdc",
+        "type": "switch",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "ping",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 305,
+        "y": 300,
+        "wires": [
+            [
+                "3daea5a9fe79471a"
+            ]
+        ]
+    },
+    {
+        "id": "3daea5a9fe79471a",
+        "type": "function",
+        "z": "d4e97245cc75c606",
+        "name": "change color",
+        "func": "let colors = [\"white\",\"red\",0x00ff00,0x0000ff] //both hex or string are fine\nmsg.payload =  {\"cubeColor\": colors[Math.floor(Math.random()*colors.length)]}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 300,
+        "wires": [
+            [
+                "39582722b90e4fc7"
+            ]
+        ]
+    },
+    {
+        "id": "75f006884d269dce",
+        "type": "comment",
+        "z": "d4e97245cc75c606",
+        "name": "Three.js example with websockets",
+        "info": "",
+        "x": 200,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "b51e22fcff75ad7a",
+        "type": "http in",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "url": "/three.js",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 150,
+        "y": 580,
+        "wires": [
+            [
+                "d18ac7f8db7702ad",
+                "f1d0a8f572415de0"
+            ]
+        ]
+    },
+    {
+        "id": "07bafe747342778c",
+        "type": "http response",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 650,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "d18ac7f8db7702ad",
+        "type": "file in",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "filename": "/data/three.js",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 400,
+        "y": 580,
+        "wires": [
+            [
+                "ce368b32ebc5b921",
+                "07bafe747342778c"
+            ]
+        ]
+    },
+    {
+        "id": "f1d0a8f572415de0",
+        "type": "debug",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 180,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "ce368b32ebc5b921",
+        "type": "debug",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 670,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "c61972d9c640cdaf",
+        "type": "file in",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "filename": "/data/website.html",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 310,
+        "y": 160,
+        "wires": [
+            [
+                "3ba6c45221cb0830"
+            ]
+        ]
+    },
+    {
+        "id": "4259fadcaa8cf313",
+        "type": "debug",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 210,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "762debb1ba6e3730",
+        "type": "http in",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "url": "/ThreeJS/scene.json",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 190,
+        "y": 680,
+        "wires": [
+            [
+                "3c69b336d296930f",
+                "e66f88fd1c0ccd91"
+            ]
+        ]
+    },
+    {
+        "id": "1f5e6b4cee4cdb6f",
+        "type": "http response",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 650,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "3c69b336d296930f",
+        "type": "file in",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "filename": "/data/ThreeJS/scene.json",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 440,
+        "y": 680,
+        "wires": [
+            [
+                "41f6a9b824bf157d",
+                "1f5e6b4cee4cdb6f"
+            ]
+        ]
+    },
+    {
+        "id": "e66f88fd1c0ccd91",
+        "type": "debug",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 180,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "41f6a9b824bf157d",
+        "type": "debug",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 670,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "4f21d6b2b722a5e0",
+        "type": "inject",
+        "z": "d4e97245cc75c606",
+        "name": "cubeSize=10",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeSize\":10}",
+        "payloadType": "json",
+        "x": 470,
+        "y": 460,
+        "wires": [
+            [
+                "e621d3fbe6bead78"
+            ]
+        ]
+    },
+    {
+        "id": "f2e5ce06e73a5279",
+        "type": "inject",
+        "z": "d4e97245cc75c606",
+        "name": "cubeSize=1",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeSize\":1}",
+        "payloadType": "json",
+        "x": 470,
+        "y": 500,
+        "wires": [
+            [
+                "e621d3fbe6bead78"
+            ]
+        ]
+    },
+    {
+        "id": "e621d3fbe6bead78",
+        "type": "switch",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nempty"
+            },
+            {
+                "t": "nempty"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 810,
+        "y": 400,
+        "wires": [
+            [
+                "fc40e94e6fcb2698"
+            ],
+            [
+                "7f800967472b7312"
+            ]
+        ]
+    },
+    {
+        "id": "7f800967472b7312",
+        "type": "debug",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 910,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "d65888f14ac3f9e8",
+        "type": "function",
+        "z": "d4e97245cc75c606",
+        "name": "",
+        "func": "msg.payload += \"<h1>Test<h1>\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 160,
+        "wires": [
+            [
+                "4a978e5a67f25408"
+            ]
+        ]
+    },
+    {
+        "id": "6c7557ad1a1e138b",
+        "type": "http in",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "url": "/heatmap",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 110,
+        "y": 160,
+        "wires": [
+            [
+                "6c5ab4ab7204f598",
+                "42401298a7ffe957"
+            ]
+        ]
+    },
+    {
+        "id": "5aec57b972f8edbe",
+        "type": "http response",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1010,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "6c5ab4ab7204f598",
+        "type": "file in",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "filename": "/data/canvas.html",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 290,
+        "y": 80,
+        "wires": [
+            [
+                "a6ae48205378e9b4"
+            ]
+        ]
+    },
+    {
+        "id": "42401298a7ffe957",
+        "type": "file in",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "filename": "/data/canvas.js",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 300,
+        "y": 260,
+        "wires": [
+            [
+                "6caaed2e9b27ad7a"
+            ]
+        ]
+    },
+    {
+        "id": "4ba22ea1222b66e7",
+        "type": "debug",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 870,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "8295714db1169788",
+        "type": "function",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "func": "if(msg.topic == \"html\"){\n    context.set(\"html\",msg.payload);\n}\nif(msg.topic == \"js\"){\n    context.set(\"js\",msg.payload);\n}\nvar html = context.get(\"html\");\nvar js = context.get(\"js\");\n\nif((html != null) & (js != null)){\n    msg.payload = html + js;\n    context.set(\"html\",null);\n    context.set(\"js\",null);\nreturn msg;\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
+        "y": 160,
+        "wires": [
+            [
+                "5aec57b972f8edbe",
+                "4ba22ea1222b66e7"
+            ]
+        ]
+    },
+    {
+        "id": "a6ae48205378e9b4",
+        "type": "change",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "html",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 500,
+        "y": 80,
+        "wires": [
+            [
+                "8295714db1169788"
+            ]
+        ]
+    },
+    {
+        "id": "6caaed2e9b27ad7a",
+        "type": "change",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "js",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 500,
+        "y": 260,
+        "wires": [
+            [
+                "8295714db1169788"
+            ]
+        ]
+    },
+    {
+        "id": "71a6f05b32672803",
+        "type": "websocket out",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "server": "c6bb1eb5.edd3d",
+        "client": "",
+        "x": 880,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "abc6c2fd24cd296a",
+        "type": "inject",
+        "z": "79782dcfc5608d75",
+        "name": "Spin slow",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeRotationSpeed\":0.02}",
+        "payloadType": "json",
+        "x": 425,
+        "y": 420,
+        "wires": [
+            [
+                "6ef5e295c00e41cb"
+            ]
+        ]
+    },
+    {
+        "id": "7d4ab46c4249d155",
+        "type": "inject",
+        "z": "79782dcfc5608d75",
+        "name": "Spin fast",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeRotationSpeed\":0.1}",
+        "payloadType": "json",
+        "x": 425,
+        "y": 465,
+        "wires": [
+            [
+                "6ef5e295c00e41cb"
+            ]
+        ]
+    },
+    {
+        "id": "0673ea250ef7d9c4",
+        "type": "change",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "rules": [
+            {
+                "t": "delete",
+                "p": "_session",
+                "pt": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 615,
+        "y": 360,
+        "wires": [
+            [
+                "6ef5e295c00e41cb"
+            ]
+        ]
+    },
+    {
+        "id": "7be070c7ca7103b3",
+        "type": "websocket in",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "server": "a5db9e65.7dd36",
+        "client": "",
+        "x": 100,
+        "y": 360,
+        "wires": [
+            [
+                "a0e53569ecd2173f",
+                "14c2077771821131"
+            ]
+        ]
+    },
+    {
+        "id": "a0e53569ecd2173f",
+        "type": "switch",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "ping",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 265,
+        "y": 360,
+        "wires": [
+            [
+                "7be3b71f3ca4cee6"
+            ]
+        ]
+    },
+    {
+        "id": "7be3b71f3ca4cee6",
+        "type": "function",
+        "z": "79782dcfc5608d75",
+        "name": "change color",
+        "func": "let colors = [\"white\",\"red\",0x00ff00,0x0000ff] //both hex or string are fine\nmsg.payload =  {\"cubeColor\": colors[Math.floor(Math.random()*colors.length)]}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 360,
+        "wires": [
+            [
+                "0673ea250ef7d9c4"
+            ]
+        ]
+    },
+    {
+        "id": "14c2077771821131",
+        "type": "debug",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 170,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "44cba3b27f60155d",
+        "type": "inject",
+        "z": "79782dcfc5608d75",
+        "name": "cubeSize=10",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeSize\":10}",
+        "payloadType": "json",
+        "x": 430,
+        "y": 520,
+        "wires": [
+            [
+                "6ef5e295c00e41cb"
+            ]
+        ]
+    },
+    {
+        "id": "9c32ca0e3a9324e0",
+        "type": "inject",
+        "z": "79782dcfc5608d75",
+        "name": "cubeSize=1",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"cubeSize\":1}",
+        "payloadType": "json",
+        "x": 430,
+        "y": 560,
+        "wires": [
+            [
+                "6ef5e295c00e41cb"
+            ]
+        ]
+    },
+    {
+        "id": "6ef5e295c00e41cb",
+        "type": "switch",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nempty"
+            },
+            {
+                "t": "nempty"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 770,
+        "y": 460,
+        "wires": [
+            [
+                "71a6f05b32672803"
+            ],
+            [
+                "f2959894f8c6fdc4"
+            ]
+        ]
+    },
+    {
+        "id": "f2959894f8c6fdc4",
+        "type": "debug",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 870,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "8ac8d5b91efb4a40",
+        "type": "websocket out",
+        "z": "6d3760f81b442703",
+        "name": "",
+        "server": "1acb1619cd164e4a",
+        "client": "",
+        "x": 820,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "91a6265483a2a345",
+        "type": "http in",
+        "z": "6d3760f81b442703",
+        "name": "",
+        "url": "/websocketBS",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 210,
+        "y": 100,
+        "wires": [
+            [
+                "312d384336644be9"
+            ]
+        ]
+    },
+    {
+        "id": "26ebf358097c5f2e",
+        "type": "http response",
+        "z": "6d3760f81b442703",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 725,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "80fd8072bb5390b8",
+        "type": "change",
+        "z": "6d3760f81b442703",
+        "name": "Set Headers",
+        "rules": [
+            {
+                "t": "set",
+                "p": "headers",
+                "pt": "msg",
+                "to": "{}",
+                "tot": "json"
+            },
+            {
+                "t": "set",
+                "p": "headers.content-type",
+                "pt": "msg",
+                "to": "text/html",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "headers.Access-Control-Allow-Origin",
+                "pt": "msg",
+                "to": "*",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 550,
+        "y": 100,
+        "wires": [
+            [
+                "26ebf358097c5f2e"
+            ]
+        ]
+    },
+    {
+        "id": "312d384336644be9",
+        "type": "template",
+        "z": "6d3760f81b442703",
+        "name": "three.js",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "<html>\n<head>\n\n    <title>Test</title>\n\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\n<script>\nvar server = window.location.href.split(\"http://\")[1].split(\"/\")[0]\nconsole.log(\"Page location is \" + server)\nvar socket2 = new  WebSocket(\"ws://\" + server + \"/ws/websocketbs\");\nvar cubeRotationSpeed = 0.02;\nlet cubeColor = \"blue\"\n\nsocket2.onopen = function() {\n  var message = {\n    'payload': 'Client connected'\n  };\n};\n\nsocket2.onclose = function(){\n  console.log('Connection closed');\n};\n\nsocket2.onerror = function(error) {\n  console.log('Error detected: ' + JSON.stringify(error));\n};\n\nsocket2.onmessage = function(e) {\n  var server_message = e.data;\n  console.log(e);\n  socket2.send(true);\n}\n\n\n</script>\n\n\n",
+        "output": "str",
+        "x": 390,
+        "y": 100,
+        "wires": [
+            [
+                "80fd8072bb5390b8"
+            ]
+        ]
+    },
+    {
+        "id": "06e9d7a7018cd9ae",
+        "type": "inject",
+        "z": "6d3760f81b442703",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Websocket",
+        "payload": "Bullshit",
+        "payloadType": "str",
+        "x": 570,
+        "y": 280,
+        "wires": [
+            [
+                "8ac8d5b91efb4a40"
+            ]
+        ]
+    },
+    {
+        "id": "862ef573916cc69a",
+        "type": "websocket in",
+        "z": "6d3760f81b442703",
+        "name": "",
+        "server": "1acb1619cd164e4a",
+        "client": "",
+        "x": 380,
+        "y": 360,
+        "wires": [
+            [
+                "fe287908150eacde"
+            ]
+        ]
+    },
+    {
+        "id": "fe287908150eacde",
+        "type": "debug",
+        "z": "6d3760f81b442703",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 610,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "e3e4522e.1c1bb",
+        "type": "inject",
+        "z": "520818ab62441fe9",
+        "name": "Tick every 5 secs",
+        "repeat": "5",
+        "crontab": "",
+        "once": false,
+        "topic": "test",
+        "payload": "",
+        "payloadType": "date",
+        "x": 230,
+        "y": 240,
+        "wires": [
+            [
+                "45dbf990.ba2408",
+                "9104ae78cbc45b2a"
+            ]
+        ]
+    },
+    {
+        "id": "50da04b3.af25fc",
+        "type": "websocket out",
+        "z": "520818ab62441fe9",
+        "name": "",
+        "server": "985ecbc7.67a138",
+        "client": "",
+        "x": 760,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "42a28745.bd5d78",
+        "type": "http response",
+        "z": "520818ab62441fe9",
+        "name": "",
+        "x": 601,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "1787be40.e87842",
+        "type": "http in",
+        "z": "520818ab62441fe9",
+        "name": "",
+        "url": "/simple",
+        "method": "get",
+        "swaggerDoc": "",
+        "x": 232,
+        "y": 180,
+        "wires": [
+            [
+                "1857548e.e7a8ab"
+            ]
+        ]
+    },
+    {
+        "id": "1857548e.e7a8ab",
+        "type": "template",
+        "z": "520818ab62441fe9",
+        "name": "Simple Web Page",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "html",
+        "syntax": "mustache",
+        "template": "<!DOCTYPE HTML>\n<html>\n    <head>\n    <title>Simple Live Display</title>\n    <script type=\"text/javascript\">\n        var ws;\n        var wsUri = \"ws:\";\n        var loc = window.location;\n        console.log(loc);\n        if (loc.protocol === \"https:\") { wsUri = \"wss:\"; }\n        // This needs to point to the web socket in the Node-RED flow\n        // ... in this case it's ws/simple\n        wsUri += \"//\" + loc.host + loc.pathname.replace(\"simple\",\"ws/simple\");\n\n        function wsConnect() {\n            console.log(\"connect\",wsUri);\n            ws = new WebSocket(wsUri);\n            //var line = \"\";    // either uncomment this for a building list of messages\n            ws.onmessage = function(msg) {\n                var line = \"\";  // or uncomment this to overwrite the existing message\n                // parse the incoming message as a JSON object\n                var data = msg.data;\n                //console.log(data);\n                // build the output from the topic and payload parts of the object\n                line += \"<p>\"+data+\"</p>\";\n                // replace the messages div with the new \"line\"\n                document.getElementById('messages').innerHTML = line;\n                //ws.send(JSON.stringify({data:data}));\n            }\n            ws.onopen = function() {\n                // update the status div with the connection status\n                document.getElementById('status').innerHTML = \"connected\";\n                //ws.send(\"Open for data\");\n                console.log(\"connected\");\n            }\n            ws.onclose = function() {\n                // update the status div with the connection status\n                document.getElementById('status').innerHTML = \"not connected\";\n                // in case of lost connection tries to reconnect every 3 secs\n                setTimeout(wsConnect,3000);\n            }\n        }\n        \n        function doit(m) {\n            if (ws) { ws.send(m); }\n        }\n    </script>\n    </head>\n    <body onload=\"wsConnect();\" onunload=\"ws.disconnect();\">\n        <font face=\"Arial\">\n        <h1>Simple Live Display</h1>\n        <div id=\"messages\"></div>\n        <button type=\"button\" onclick='doit(\"click\");'>Click to send message</button>\n        <hr/>\n        <div id=\"status\">unknown</div>\n        </font>\n    </body>\n</html>\n",
+        "x": 429,
+        "y": 180,
+        "wires": [
+            [
+                "42a28745.bd5d78"
+            ]
+        ]
+    },
+    {
+        "id": "45dbf990.ba2408",
+        "type": "function",
+        "z": "520818ab62441fe9",
+        "name": "format time nicely",
+        "func": "msg.payload = Date(msg.payload).toString();\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 548,
+        "y": 240,
+        "wires": [
+            [
+                "50da04b3.af25fc",
+                "3c4354fc1431822a"
+            ]
+        ]
+    },
+    {
+        "id": "eccc8bc2.133378",
+        "type": "websocket in",
+        "z": "520818ab62441fe9",
+        "name": "",
+        "server": "985ecbc7.67a138",
+        "client": "",
+        "x": 520,
+        "y": 480,
+        "wires": [
+            [
+                "9adfff59.652"
+            ]
+        ]
+    },
+    {
+        "id": "9adfff59.652",
+        "type": "debug",
+        "z": "520818ab62441fe9",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 730,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "3c4354fc1431822a",
+        "type": "debug",
+        "z": "520818ab62441fe9",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 750,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "9104ae78cbc45b2a",
+        "type": "debug",
+        "z": "520818ab62441fe9",
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 430,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "cfc94591bb1cea15",
+        "type": "inject",
+        "z": "79782dcfc5608d75",
+        "name": "{\"script1\":\"#FF0000\"}",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"script1\":\"#FF0000\"}",
+        "payloadType": "json",
+        "x": 450,
+        "y": 620,
+        "wires": [
+            [
+                "6ef5e295c00e41cb"
+            ]
+        ]
+    },
+    {
+        "id": "66a903487483f660",
+        "type": "inject",
+        "z": "79782dcfc5608d75",
+        "name": "{\"script1\":\"#0000FF\"}",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"script1\":\"#0000FF\"}",
+        "payloadType": "json",
+        "x": 450,
+        "y": 660,
+        "wires": [
+            [
+                "6ef5e295c00e41cb"
+            ]
+        ]
+    },
+    {
+        "id": "a6ef4ee9f9e5c7bf",
+        "type": "inject",
+        "z": "79782dcfc5608d75",
+        "d": true,
+        "name": "hearbeat",
+        "props": [
+            {
+                "p": "payload.heartbeat",
+                "v": "",
+                "vt": "date"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 410,
+        "y": 740,
+        "wires": [
+            [
+                "6ef5e295c00e41cb"
+            ]
+        ]
+    },
+    {
+        "id": "84151e1f90d1f168",
+        "type": "inject",
+        "z": "79782dcfc5608d75",
+        "name": "Impulse",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payloadType": "date",
+        "x": 70,
+        "y": 900,
+        "wires": [
+            [
+                "7dc364bdfe959d74"
+            ]
+        ]
+    },
+    {
+        "id": "7dc364bdfe959d74",
+        "type": "function",
+        "z": "79782dcfc5608d75",
+        "name": "SensorDataExample",
+        "func": "/*msg.payload =  {\"SensorData\": [\n    {\n    \"d\":Math.floor(Math.random()*8000),\n    \"state\":Math.floor(Math.random()*8000),\n    \"a\":Math.floor(Math.random()*8000),\n    \"sig\":Math.floor(Math.random()*8000)\n    },\n    {\n    \"d\":Math.floor(Math.random()*8000),\n    \"state\":Math.floor(Math.random()*8000),\n    \"a\":Math.floor(Math.random()*8000),\n    \"sig\":Math.floor(Math.random()*8000)\n    },\n    {\n    \"d\":Math.floor(Math.random()*8000),\n    \"state\":Math.floor(Math.random()*8000),\n    \"a\":Math.floor(Math.random()*8000),\n    \"sig\":Math.floor(Math.random()*8000)\n    },\n    {\n    \"d\":Math.floor(Math.random()*8000),\n    \"state\":Math.floor(Math.random()*8000),\n    \"a\":Math.floor(Math.random()*8000),\n    \"sig\":Math.floor(Math.random()*8000)\n    }\n]};\n*/\nmsg.payload = {};\nvar SensorData=[];\nvar data;\nfor(let iv = 0; iv <8; iv++){\n    for(let ih = 0; ih <8; ih++){\n        data = {};\n        data.d = Math.floor(Math.random()*8000);\n        SensorData.push(data);\n    }\n}\nmsg.payload.SensorData = SensorData;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 240,
+        "y": 900,
+        "wires": [
+            [
+                "16fcad1a230b23ad"
+            ]
+        ]
+    },
+    {
+        "id": "99c02ad2f4526922",
+        "type": "debug",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 570,
+        "y": 980,
+        "wires": []
+    },
+    {
+        "id": "16fcad1a230b23ad",
+        "type": "function",
+        "z": "79782dcfc5608d75",
+        "name": "SensorDataToHeatmap",
+        "func": "\nvar HeatMap=[];\nvar data;\nfor(let iv = 0; iv <8; iv++){\n    for(let ih = 0; ih <8; ih++){\n        data = {};\n        data.d = msg.payload.SensorData[iv+ih].d;\n        data.x = ih + (100*ih);\n        data.y = iv + (100*iv);\n        HeatMap.push(data);\n    }\n}\nmsg.payload.HeatMap = HeatMap;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 900,
+        "wires": [
+            [
+                "734ea3c72daec0ee",
+                "99c02ad2f4526922"
+            ]
+        ]
+    },
+    {
+        "id": "734ea3c72daec0ee",
+        "type": "websocket out",
+        "z": "79782dcfc5608d75",
+        "name": "",
+        "server": "c6bb1eb5.edd3d",
+        "client": "",
+        "x": 780,
+        "y": 900,
+        "wires": []
+    }
+]
